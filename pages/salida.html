@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Salidas</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #e74c3c;
+            --primary-light: rgba(231, 76, 60, 0.1);
+            --scanner-size: 300px;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background-color: white;
+            border-radius: 5px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 5px 0;
+        }
+        .stat-label {
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+        .real-time-clock {
+            text-align: center;
+            margin: 25px 0;
+            padding: 20px;
+            background-color: #2c3e50;
+            color: white;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .clock-time {
+            font-size: 2.8em;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+        .clock-date {
+            font-size: 1.3em;
+            margin-top: 8px;
+            opacity: 0.9;
+        }
+        .scanner-container {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background-color: #f0f0f0;
+            border-radius: 8px;
+            position: relative;
+        }
+        #qr-video {
+            width: 100%;
+            max-width: 100%;
+            border-radius: 8px;
+        }
+        #qr-canvas {
+            display: none;
+        }
+        .scanner-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1;
+        }
+        .scanner-window {
+            width: var(--scanner-size);
+            height: var(--scanner-size);
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background-color: transparent;
+            position: relative;
+            overflow: hidden;
+        }
+        .scanner-window::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to bottom right,
+                transparent 45%,
+                rgba(231, 76, 60, 0.3) 50%,
+                transparent 55%
+            );
+            animation: scan-beam 2.5s linear infinite;
+            z-index: 2;
+        }
+        .scanner-window::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 2px solid var(--primary-color);
+            border-radius: 8px;
+            box-shadow: 0 0 15px var(--primary-color), 
+                        0 0 30px var(--primary-color);
+            animation: pulse-glow 2s infinite alternate;
+            z-index: 1;
+        }
+        @keyframes scan-beam {
+            0% { transform: translateY(-100%) rotate(45deg); }
+            100% { transform: translateY(100%) rotate(45deg); }
+        }
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 10px var(--primary-color), 
+                            0 0 20px var(--primary-color); }
+            100% { box-shadow: 0 0 20px var(--primary-color), 
+                            0 0 40px var(--primary-color); }
+        }
+        .scanner-status {
+            font-size: 1.2em;
+            margin: 10px 0;
+            padding: 10px;
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+            border-radius: 5px;
+            border: 1px solid var(--primary-color);
+            background-color: white;
+        }
+        .controls {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0 5px;
+        }
+        .btn-export {
+            background-color: #3498db;
+        }
+        .logs-container {
+            margin-top: 30px;
+        }
+        .log-header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 10px;
+            border-radius: 5px 5px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .log-entries {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+        }
+        .log-entry {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: white;
+        }
+        .log-entry:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .student-info {
+            flex: 1;
+        }
+        .student-name {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .student-id {
+            font-size: 0.8em;
+            color: #7f8c8d;
+        }
+        .log-time {
+            text-align: right;
+            margin-left: 10px;
+        }
+        .log-type {
+            padding: 3px 10px;
+            border-radius: 20px;
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .empty-message {
+            padding: 20px;
+            text-align: center;
+            color: #7f8c8d;
+        }
+        .scanner-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .btn-toggle {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-toggle:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .btn-toggle.off {
+            background-color: #27ae60;
+        }
+        .scanner-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #95a5a6;
+            margin-left: 5px;
+        }
+        .scanner-indicator.active {
+            background-color: #e74c3c;
+            box-shadow: 0 0 8px #e74c3c;
+        }
+        .scanner-placeholder {
+            width: 100%;
+            height: 300px;
+            background-color: #eee;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 8px;
+            color: #777;
+            font-size: 1.1em;
+        }
+        #notification-sound {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <audio id="notification-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-positive-interface-beep-221.mp3" preload="auto"></audio>
+    
+    <div class="header">
+        <h1>Registro de Salidas</h1>
+    </div>
+    
+    <div class="container">
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">Alumnos Registrados</div>
+                <div class="stat-value" id="total-students">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Salidas Hoy</div>
+                <div class="stat-value" id="exits-today">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Último Registro</div>
+                <div class="stat-value" id="last-register">--:--</div>
+            </div>
+        </div>
+        
+        <div class="real-time-clock">
+            <div class="clock-time" id="current-time">--:--:--</div>
+            <div class="clock-date" id="current-date">--- --, ----</div>
+        </div>
+        
+        <div class="scanner-container">
+            <h3>Escáner QR de Salidas</h3>
+            <div class="scanner-status" id="scan-result">
+                Escáner apagado 
+                <span class="scanner-indicator" id="scanner-indicator"></span>
+            </div>
+            
+            <div id="scanner-view" style="position: relative;">
+                <div class="scanner-placeholder" id="scanner-placeholder">
+                    Presione "Activar Escáner" para comenzar
+                </div>
+                <video id="qr-video" playsinline style="display: none; width: 100%;"></video>
+                <div class="scanner-overlay" id="scanner-overlay">
+                    <div class="scanner-window"></div>
+                </div>
+            </div>
+            <canvas id="qr-canvas" style="display: none;"></canvas>
+            
+            <div class="scanner-controls">
+                <button id="toggle-scanner" class="btn btn-toggle">
+                    <span id="toggle-icon">▶</span>
+                    <span id="toggle-text">Activar Escáner</span>
+                </button>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="export-btn" class="btn btn-export">Exportar a Excel</button>
+        </div>
+        
+        <div class="logs-container">
+            <div class="log-header">
+                <h3>Registros Recientes</h3>
+                <span id="log-count">0 registros</span>
+            </div>
+            <div class="log-entries" id="attendance-log">
+                <div class="empty-message">No hay registros de salida aún</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuración
+        const registerType = 'exit';
+        let attendanceRecords = [];
+        let scanning = false;
+        let videoStream = null;
+        
+        // Elementos del DOM
+        const videoElement = document.getElementById('qr-video');
+        const canvasElement = document.getElementById('qr-canvas');
+        const canvas = canvasElement.getContext('2d');
+        const scanResult = document.getElementById('scan-result');
+        const toggleScannerBtn = document.getElementById('toggle-scanner');
+        const toggleIcon = document.getElementById('toggle-icon');
+        const toggleText = document.getElementById('toggle-text');
+        const scannerIndicator = document.getElementById('scanner-indicator');
+        const scannerPlaceholder = document.getElementById('scanner-placeholder');
+        const scannerOverlay = document.getElementById('scanner-overlay');
+        const attendanceLog = document.getElementById('attendance-log');
+        const logCount = document.getElementById('log-count');
+        const exitsTodayElement = document.getElementById('exits-today');
+        const lastRegisterElement = document.getElementById('last-register');
+        const totalStudentsElement = document.getElementById('total-students');
+        const exportBtn = document.getElementById('export-btn');
+        const notificationSound = document.getElementById('notification-sound');
+        
+        // Actualizar reloj
+        function updateClock() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('es-MX', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            });
+            const dateStr = now.toLocaleDateString('es-MX', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            const formattedDate = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+            
+            document.getElementById('current-time').textContent = timeStr;
+            document.getElementById('current-date').textContent = formattedDate;
+        }
+        
+        // Función para activar el escáner
+        async function activateScanner() {
+            try {
+                scanResult.textContent = "Iniciando cámara...";
+                scannerIndicator.classList.remove("active");
+                
+                videoStream = await navigator.mediaDevices.getUserMedia({
+                    video: { 
+                        facingMode: "environment",
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                });
+                
+                videoElement.srcObject = videoStream;
+                videoElement.style.display = 'block';
+                scannerPlaceholder.style.display = 'none';
+                scannerOverlay.style.display = 'flex';
+                
+                videoElement.onloadedmetadata = () => {
+                    videoElement.play();
+                    scanning = true;
+                    updateScannerUI(true);
+                    scanResult.textContent = "Escaneando...";
+                    requestAnimationFrame(tick);
+                };
+                
+            } catch (err) {
+                console.error("Error al iniciar cámara:", err);
+                scanResult.textContent = "Error al acceder a la cámara";
+                updateScannerUI(false);
+            }
+        }
+        
+        // Función para desactivar el escáner
+        function deactivateScanner() {
+            scanning = false;
+            
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
+            }
+            
+            videoElement.srcObject = null;
+            videoElement.style.display = 'none';
+            scannerPlaceholder.style.display = 'flex';
+            scannerOverlay.style.display = 'none';
+            
+            updateScannerUI(false);
+            scanResult.textContent = "Escáner apagado";
+        }
+        
+        // Actualizar interfaz del escáner
+        function updateScannerUI(isActive) {
+            if (isActive) {
+                toggleIcon.textContent = "⏸";
+                toggleText.textContent = "Pausar Escáner";
+                toggleScannerBtn.classList.remove("off");
+                scannerIndicator.classList.add("active");
+            } else {
+                toggleIcon.textContent = "▶";
+                toggleText.textContent = "Activar Escáner";
+                toggleScannerBtn.classList.add("off");
+                scannerIndicator.classList.remove("active");
+            }
+        }
+        
+        // Función de escaneo
+        function tick() {
+            if (!scanning) return;
+            
+            if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
+                // Calcular área de escaneo (centro de la pantalla)
+                const videoWidth = videoElement.videoWidth;
+                const videoHeight = videoElement.videoHeight;
+                const scanSize = Math.min(videoWidth, videoHeight) * 0.6;
+                const offsetX = (videoWidth - scanSize) / 2;
+                const offsetY = (videoHeight - scanSize) / 2;
+                
+                // Ajustar tamaño del canvas
+                canvasElement.width = scanSize;
+                canvasElement.height = scanSize;
+                
+                // Dibujar solo el área de interés en el canvas
+                canvas.drawImage(
+                    videoElement,
+                    offsetX, offsetY, scanSize, scanSize,
+                    0, 0, scanSize, scanSize
+                );
+                
+                const imageData = canvas.getImageData(0, 0, scanSize, scanSize);
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: "dontInvert",
+                });
+                
+                if (code) {
+                    registerAttendance(code.data);
+                }
+            }
+            
+            requestAnimationFrame(tick);
+        }
+        
+        // Registrar asistencia
+        async function registerAttendance(qrData) {
+            try {
+                let studentData;
+                
+                try {
+                    studentData = JSON.parse(qrData);
+                    
+                    if (!studentData.id || !studentData.nombre || !studentData.grupo) {
+                        throw new Error("Formato de QR inválido");
+                    }
+                    
+                    if (!/^[a-zA-Z0-9]{7,10}$/.test(studentData.id)) {
+                        throw new Error("ID no válido");
+                    }
+                } catch (e) {
+                    // Si falla el JSON, intentar como ID simple
+                    const studentId = qrData.trim();
+                    if (!/^[a-zA-Z0-9]{7,10}$/.test(studentId)) {
+                        showResult("ID no válido (7-10 caracteres)", "error");
+                        return;
+                    }
+                    
+                    studentData = {
+                        id: studentId,
+                        nombre: `Alumno ${studentId}`,
+                        grupo: "Grupo no especificado"
+                    };
+                }
+
+                // Verificar si ya se registró recientemente
+                const lastRegister = attendanceRecords.find(reg => 
+                    reg.studentId === studentData.id && 
+                    (new Date() - new Date(reg.timestamp)) < 30000
+                );
+                
+                if (lastRegister) {
+                    showResult(`${studentData.nombre} ya registrado recientemente`, "error");
+                    return;
+                }
+                
+                const now = new Date();
+                const attendanceRecord = {
+                    studentId: studentData.id,
+                    studentName: studentData.nombre,
+                    grade: studentData.grupo,
+                    type: registerType,
+                    timestamp: now.toISOString(),
+                    date: now.toLocaleDateString(),
+                    time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                };
+                
+                attendanceRecords.unshift(attendanceRecord);
+                updateUI();
+                showResult(`Salida registrada: ${studentData.nombre}`, "success");
+                playNotificationSound();
+                
+            } catch (error) {
+                console.error("Error:", error);
+                showResult("Error al registrar: " + error.message, "error");
+            }
+        }
+        
+        // Reproducir sonido de notificación
+        function playNotificationSound() {
+            notificationSound.currentTime = 0;
+            notificationSound.play().catch(e => console.log("No se pudo reproducir el sonido:", e));
+        }
+        
+        // Exportar a Excel
+        function exportToExcel() {
+            if(attendanceRecords.length === 0) {
+                alert("No hay datos para exportar");
+                return;
+            }
+            
+            const excelData = attendanceRecords.map(record => ({
+                "ID Alumno": record.studentId,
+                "Nombre": record.studentName,
+                "Grado/Grupo": record.grade,
+                "Tipo": "Salida",
+                "Fecha": record.date,
+                "Hora": record.time,
+                "Fecha Completa (UTC)": record.timestamp
+            }));
+            
+            const worksheet = XLSX.utils.json_to_sheet(excelData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Registros");
+            
+            const fecha = new Date().toISOString().slice(0, 10);
+            XLSX.writeFile(workbook, `registros_salida_${fecha}.xlsx`);
+        }
+        
+        // Mostrar resultado
+        function showResult(message, type) {
+            scanResult.textContent = message;
+            scanResult.className = "scanner-status";
+            
+            if (type === "success") {
+                scanResult.style.backgroundColor = "var(--primary-light)";
+                scanResult.style.color = "var(--primary-color)";
+                scanResult.style.borderColor = "var(--primary-color)";
+            } else {
+                scanResult.style.backgroundColor = "rgba(231, 76, 60, 0.1)";
+                scanResult.style.color = "#e74c3c";
+                scanResult.style.borderColor = "#e74c3c";
+            }
+        }
+        
+        // Actualizar interfaz
+        function updateUI() {
+            exitsTodayElement.textContent = attendanceRecords.length;
+            lastRegisterElement.textContent = attendanceRecords.length > 0 
+                ? attendanceRecords[0].time 
+                : "--:--";
+            updateLogList();
+        }
+        
+        // Actualizar lista de registros
+        function updateLogList() {
+            const emptyMessage = attendanceLog.querySelector('.empty-message');
+            if (emptyMessage) attendanceLog.removeChild(emptyMessage);
+            
+            attendanceLog.innerHTML = '';
+            attendanceRecords.slice(0, 50).forEach(record => {
+                const logEntry = document.createElement('div');
+                logEntry.className = 'log-entry';
+                logEntry.innerHTML = `
+                    <div class="student-info">
+                        <div class="student-name">${record.studentName}</div>
+                        <div class="student-id">ID: ${record.studentId} | ${record.grade}</div>
+                    </div>
+                    <div class="log-time">${record.time}</div>
+                    <div class="log-type">SALIDA</div>
+                `;
+                attendanceLog.appendChild(logEntry);
+            });
+            
+            logCount.textContent = `${attendanceRecords.length} registros`;
+            if(attendanceRecords.length === 0) {
+                attendanceLog.innerHTML = '<div class="empty-message">No hay registros de salida aún</div>';
+            }
+        }
+        
+        // Iniciar
+        function loadInitialData() {
+            totalStudentsElement.textContent = "100";
+        }
+        
+        // Event listeners
+        toggleScannerBtn.addEventListener('click', () => {
+            if (scanning) {
+                deactivateScanner();
+            } else {
+                activateScanner();
+            }
+        });
+        
+        exportBtn.addEventListener('click', exportToExcel);
+        
+        // Confirmación antes de salir de la página
+        window.addEventListener('beforeunload', (e) => {
+            if (scanning || attendanceRecords.length > 0) {
+                e.preventDefault();
+                e.returnValue = '¿Estás seguro de que quieres salir? Los registros podrían perderse.';
+                return e.returnValue;
+            }
+        });
+        
+        // Detener escáner cuando se cierra la página
+        window.addEventListener('unload', () => {
+            if (scanning) {
+                deactivateScanner();
+            }
+        });
+        
+        // Iniciar aplicación
+        loadInitialData();
+        setInterval(updateClock, 1000);
+        updateClock();
+    </script>
+</body>
+</html>

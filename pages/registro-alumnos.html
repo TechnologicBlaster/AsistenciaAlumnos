@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Registro Escolar</title>
+    <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: #1155a3;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        
+        .btn {
+            background-color: #1155a3;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            margin-top: 10px;
+            width: 100%;
+        }
+        
+        .btn:hover {
+            background-color: #0d4785;
+        }
+        
+        .btn-generate {
+            background-color: #2ecc71;
+        }
+        
+        .btn-generate:hover {
+            background-color: #27ae60;
+        }
+        
+        .btn-download {
+            background-color: #9b59b6;
+        }
+        
+        .btn-download:hover {
+            background-color: #8e44ad;
+        }
+        
+        .btn-retrieve {
+            background-color: #e67e22;
+        }
+        
+        .btn-retrieve:hover {
+            background-color: #d35400;
+        }
+        
+        .id-display {
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 1.1em;
+            text-align: center;
+            margin: 10px 0;
+        }
+        
+        .credentials-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+            margin-top: 20px;
+        }
+        
+        .credential {
+            width: 300px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 25px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .credential-header {
+            color: #1155a3;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .student-info {
+            margin-bottom: 20px;
+        }
+        
+        .student-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .student-grade {
+            font-size: 1.1em;
+            color: #7f8c8d;
+        }
+        
+        .qr-container {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .qr-code-container {
+            width: 150px;
+            height: 150px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto;
+        }
+        
+        .student-id {
+            font-family: monospace;
+            font-size: 1.2em;
+            margin-top: 15px;
+            font-weight: bold;
+            color: #1155a3;
+        }
+        
+        .error-message {
+            color: #e74c3c;
+            font-size: 0.8em;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .credential-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .credential-actions button {
+            flex: 1;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+            width: 100%;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom: 3px solid #1155a3;
+            font-weight: bold;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .search-container {
+            margin-bottom: 20px;
+        }
+        
+        .status-message {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            text-align: center;
+            display: none;
+        }
+        
+        .success {
+            background-color: rgba(46, 204, 113, 0.2);
+            color: #27ae60;
+            border: 1px solid #27ae60;
+        }
+        
+        .error {
+            background-color: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+            border: 1px solid #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sistema de Registro Escolar</h1>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="register">Registrar Alumno</div>
+            <div class="tab" data-tab="retrieve">Buscar Alumno</div>
+        </div>
+        
+        <div class="status-message" id="status-message"></div>
+        
+        <div class="tab-content active" id="register-tab">
+            <form id="student-form">
+                <div class="form-group">
+                    <label for="student-name">Nombre Completo</label>
+                    <input type="text" id="student-name" required placeholder="Ej: Juan Pérez López">
+                    <div class="error-message" id="name-error">Ingrese nombre completo (mínimo nombre y apellido)</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="student-grade">Grupo</label>
+                    <select id="student-grade" required>
+                        <option value="">Seleccione un grupo</option>
+                        <option value="1A">1°A</option>
+                        <option value="2A">2°A</option>
+                        <option value="3A">3°A</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>ID del Alumno</label>
+                    <div class="id-display" id="student-id-display">Presione "Generar ID"</div>
+                    <button type="button" id="generate-id" class="btn btn-generate">Generar ID</button>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn">Guardar y Generar Credencial</button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="tab-content" id="retrieve-tab">
+            <div class="search-container">
+                <div class="form-group">
+                    <label for="search-id">Buscar por ID del Alumno</label>
+                    <input type="text" id="search-id" placeholder="Ingrese el ID del alumno (8 caracteres)">
+                </div>
+                <button type="button" id="search-btn" class="btn btn-retrieve">Buscar Alumno</button>
+            </div>
+            <div id="search-results"></div>
+        </div>
+    </div>
+    
+    <div class="credentials-container" id="credentials-container">
+        <!-- Las credenciales se agregarán aquí -->
+    </div>
+
+    <script type="module">
+        // Importar las funciones necesarias de Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+        import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-analytics.js";
+
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCMAOXwCgdkcJbPC2hANk-V3lTW2UIQKow",
+            authDomain: "registroalumnos-3a828.firebaseapp.com",
+            databaseURL: "https://registroalumnos-3a828-default-rtdb.firebaseio.com",
+            projectId: "registroalumnos-3a828",
+            storageBucket: "registroalumnos-3a828.firebasestorage.app",
+            messagingSenderId: "688893558256",
+            appId: "1:688893558256:web:861ad91a0e34bb45f33135",
+            measurementId: "G-CB290LXN0P"
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const analytics = getAnalytics(app);
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const studentForm = document.getElementById('student-form');
+            const generateIdBtn = document.getElementById('generate-id');
+            const studentIdDisplay = document.getElementById('student-id-display');
+            const credentialsContainer = document.getElementById('credentials-container');
+            const nameInput = document.getElementById('student-name');
+            const nameError = document.getElementById('name-error');
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            const searchBtn = document.getElementById('search-btn');
+            const searchIdInput = document.getElementById('search-id');
+            const searchResults = document.getElementById('search-results');
+            const statusMessage = document.getElementById('status-message');
+            
+            let generatedId = '';
+            let credentialCount = 0;
+            
+            // Manejo de pestañas
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    
+                    tab.classList.add('active');
+                    document.getElementById(`${tab.dataset.tab}-tab`).classList.add('active');
+                });
+            });
+            
+            // Generar ID aleatorio seguro
+            generateIdBtn.addEventListener('click', function() {
+                const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Caracteres no ambiguos
+                const array = new Uint8Array(8);
+                window.crypto.getRandomValues(array);
+                
+                generatedId = Array.from(array, byte => 
+                    chars[byte % chars.length]
+                ).join('');
+                
+                studentIdDisplay.textContent = generatedId;
+            });
+            
+            // Validar nombre
+            nameInput.addEventListener('input', function() {
+                const nombre = this.value.trim();
+                const nameParts = nombre.split(' ').filter(part => part.length > 0);
+                
+                if (nameParts.length < 2 || nombre.length < 5) {
+                    nameError.style.display = 'block';
+                } else {
+                    nameError.style.display = 'none';
+                }
+            });
+            
+            // Guardar alumno en Firebase
+            studentForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                if (!generatedId) {
+                    showStatus('Por favor genere un ID primero', 'error');
+                    return;
+                }
+                
+                const nombre = nameInput.value.trim();
+                const nameParts = nombre.split(' ').filter(part => part.length > 0);
+                if (nameParts.length < 2 || nombre.length < 5) {
+                    nameError.style.display = 'block';
+                    return;
+                }
+                
+                const grupo = document.getElementById('student-grade').value;
+                if (!grupo) {
+                    showStatus('Por favor seleccione un grupo', 'error');
+                    return;
+                }
+                
+                const studentData = {
+                    id: generatedId,
+                    nombre: nombre,
+                    grupo: grupo,
+                    fechaRegistro: new Date().toISOString()
+                };
+                
+                // Guardar en Firebase
+                set(ref(database, 'alumnos/' + generatedId), studentData)
+                    .then(() => {
+                        createCredential(studentData);
+                        studentForm.reset();
+                        studentIdDisplay.textContent = 'Presione "Generar ID"';
+                        generatedId = '';
+                        showStatus('Alumno registrado exitosamente!', 'success');
+                    })
+                    .catch(error => {
+                        console.error('Error al guardar:', error);
+                        showStatus('Error al guardar los datos: ' + error.message, 'error');
+                    });
+            });
+            
+            // Buscar alumno por ID
+            searchBtn.addEventListener('click', function() {
+                const searchId = searchIdInput.value.trim().toUpperCase();
+                
+                if (!searchId || searchId.length !== 8) {
+                    showStatus('Ingrese un ID válido de 8 caracteres', 'error');
+                    return;
+                }
+                
+                get(ref(database, 'alumnos/' + searchId))
+                    .then(snapshot => {
+                        if (snapshot.exists()) {
+                            const studentData = snapshot.val();
+                            displaySearchResult(studentData);
+                            showStatus('Alumno encontrado', 'success');
+                        } else {
+                            searchResults.innerHTML = '<p class="error-message">No se encontró ningún alumno con ese ID</p>';
+                            showStatus('Alumno no encontrado', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error al buscar:', error);
+                        showStatus('Error al buscar el alumno', 'error');
+                    });
+            });
+
+            // Permitir búsqueda con Enter
+            searchIdInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchBtn.click();
+                }
+            });
+            
+            // Mostrar resultado de búsqueda
+            function displaySearchResult(studentData) {
+                searchResults.innerHTML = '';
+                
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'credential';
+                resultDiv.innerHTML = `
+                    <div class="credential-header">Credencial Encontrada</div>
+                    
+                    <div class="student-info">
+                        <div class="student-name">${studentData.nombre}</div>
+                        <div class="student-grade">Grupo: ${studentData.grupo}</div>
+                    </div>
+                    
+                    <div class="qr-container">
+                        <div class="qr-code-container" id="search-qrcode"></div>
+                        <div class="student-id">ID: ${studentData.id}</div>
+                    </div>
+                    
+                    <div class="credential-actions">
+                        <button class="btn btn-download" id="download-search-qr">Descargar QR</button>
+                        <button class="btn btn-download" id="download-full-credential">Descargar Credencial</button>
+                    </div>
+                `;
+                
+                searchResults.appendChild(resultDiv);
+                
+                // Generar QR con los datos del alumno
+                const qrData = JSON.stringify({
+                    id: studentData.id,
+                    nombre: studentData.nombre,
+                    grupo: studentData.grupo
+                });
+                
+                new QRCode(document.getElementById('search-qrcode'), {
+                    text: qrData,
+                    width: 150,
+                    height: 150,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+                
+                // Configurar botón de descarga de QR
+                document.getElementById('download-search-qr').addEventListener('click', function() {
+                    const canvas = document.querySelector('#search-qrcode canvas');
+                    if (canvas) {
+                        const link = document.createElement('a');
+                        link.download = `QR-${studentData.id}.png`;
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                    }
+                });
+                
+                // Configurar botón de descarga de credencial completa
+                document.getElementById('download-full-credential').addEventListener('click', function() {
+                    html2canvas(resultDiv).then(canvas => {
+                        const link = document.createElement('a');
+                        link.download = `Credencial-${studentData.id}.png`;
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                    });
+                });
+            }
+            
+            // Crear credencial visual
+            function createCredential(studentData) {
+                const credentialId = `credential-${credentialCount++}`;
+                const credentialElement = document.createElement('div');
+                credentialElement.className = 'credential';
+                credentialElement.id = credentialId;
+                
+                credentialElement.innerHTML = `
+                    <div class="credential-header">Credencial Escolar</div>
+                    
+                    <div class="student-info">
+                        <div class="student-name">${studentData.nombre}</div>
+                        <div class="student-grade">Grupo: ${studentData.grupo}</div>
+                    </div>
+                    
+                    <div class="qr-container">
+                        <div class="qr-code-container" id="qrcode-${credentialId}"></div>
+                        <div class="student-id">ID: ${studentData.id}</div>
+                    </div>
+                    
+                    <div class="credential-actions">
+                        <button class="btn btn-download download-btn" data-id="${credentialId}">Descargar QR</button>
+                        <button class="btn btn-download download-credential-btn" data-id="${credentialId}">Descargar Credencial</button>
+                    </div>
+                `;
+                
+                credentialsContainer.appendChild(credentialElement);
+                
+                // Generar QR con los datos del alumno
+                const qrData = JSON.stringify({
+                    id: studentData.id,
+                    nombre: studentData.nombre,
+                    grupo: studentData.grupo
+                });
+                
+                new QRCode(document.getElementById(`qrcode-${credentialId}`), {
+                    text: qrData,
+                    width: 150,
+                    height: 150,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+                
+                // Desplazarse para mostrar la nueva credencial
+                window.scrollTo({
+                    top: document.body.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }
+            
+            // Mostrar mensajes de estado
+            function showStatus(message, type) {
+                statusMessage.textContent = message;
+                statusMessage.className = `status-message ${type}`;
+                statusMessage.style.display = 'block';
+                
+                setTimeout(() => {
+                    statusMessage.style.display = 'none';
+                }, 5000);
+            }
+            
+            // Manejadores de eventos para descargas
+            document.addEventListener('click', function(e) {
+                // Descargar QR individual
+                if (e.target.classList.contains('download-btn')) {
+                    const credentialId = e.target.getAttribute('data-id');
+                    const credential = document.getElementById(credentialId);
+                    const qrContainer = credential.querySelector('.qr-code-container');
+                    const canvas = qrContainer.querySelector('canvas');
+                    
+                    if (canvas) {
+                        const studentId = credential.querySelector('.student-id').textContent.replace('ID: ', '');
+                        const link = document.createElement('a');
+                        link.download = `QR-${studentId}.png`;
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                    }
+                }
+                
+                // Descargar credencial completa
+                if (e.target.classList.contains('download-credential-btn')) {
+                    const credentialId = e.target.getAttribute('data-id');
+                    const credential = document.getElementById(credentialId);
+                    const studentId = credential.querySelector('.student-id').textContent.replace('ID: ', '');
+                    
+                    html2canvas(credential).then(canvas => {
+                        const link = document.createElement('a');
+                        link.download = `Credencial-${studentId}.png`;
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

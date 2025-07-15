@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Alumnos</title>
+    <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #1155a3;
+            --secondary-color: #1a73e8;
+            --credential-width: 350px;
+            --credential-height: 500px;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .header {
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            width: 100%;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 20px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            width: 90%;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .btn {
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+        }
+        
+        .btn-generate {
+            background: linear-gradient(to right, #0d8543, #2ecc71);
+        }
+        
+        .btn-generate:hover {
+            background: linear-gradient(to right, #0b7439, #27ae60);
+        }
+        
+        .form-actions {
+            text-align: center;
+            margin-top: 30px;
+        }
+        
+        .error-message {
+            color: #e74c3c;
+            font-size: 0.8em;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .id-display {
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 1.1em;
+            text-align: center;
+        }
+        
+        /* Estilos para la credencial */
+        .credential-container {
+            display: none;
+            margin-top: 30px;
+            width: 100%;
+            align-items: center;
+            flex-direction: column;
+        }
+        
+        .credential-wrapper {
+            width: var(--credential-width);
+            height: var(--credential-height);
+            position: relative;
+            margin-bottom: 30px;
+            perspective: 1000px;
+        }
+        
+        .credential {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+        }
+        
+        .credential.flipped {
+            transform: rotateY(180deg);
+        }
+        
+        .credential-front, .credential-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .credential-front {
+            background: linear-gradient(135deg, #e8f0fe 0%, #d2e3fc 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .top-logos {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+        }
+        
+        .government-logo, .school-logo {
+            height: 60px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .government-logo img, .school-logo img {
+            height: 100%;
+            width: auto;
+            object-fit: contain;
+        }
+        
+        .school-name {
+            color: white;
+            font-size: 1.1em;
+            font-weight: bold;
+            text-align: center;
+            flex-grow: 1;
+            padding: 0 10px;
+        }
+        
+        .student-main-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            width: 100%;
+        }
+        
+        .student-photo-container {
+            width: 120px;
+            height: 150px;
+            background-color: #fff;
+            border: 2px solid var(--primary-color);
+            margin-bottom: 15px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .student-photo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .student-info {
+            text-align: center;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        .student-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+        
+        .student-grade {
+            font-size: 1.1em;
+            color: #333;
+        }
+        
+        .bottom-section {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+        }
+        
+        .government-seal {
+            height: 50px;
+        }
+        
+        .government-seal img {
+            height: 100%;
+            width: auto;
+        }
+        
+        .school-years {
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            font-size: 1.1em;
+        }
+        
+        /* Parte trasera de la credencial */
+        .credential-back {
+            background: linear-gradient(135deg, #e8f0fe 0%, #d2e3fc 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            transform: rotateY(180deg);
+        }
+        
+        .turn-header {
+            width: 100%;
+            padding: 15px;
+            text-align: center;
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+            color: white;
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+        
+        .qr-section {
+            margin: 30px 0;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            text-align: center;
+            width: 80%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .qr-container {
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .qr-label {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .qr-id-display {
+            font-family: monospace;
+            font-size: 1.2em;
+            margin-top: 15px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .stamp-area {
+            width: 80%;
+            height: 60px;
+            margin-top: 10px;
+            background-color: white;
+            border: 1px dashed #999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #777;
+            font-size: 0.9em;
+        }
+        
+        .school-address {
+            width: 100%;
+            padding: 15px;
+            text-align: center;
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+            color: white;
+            font-size: 0.8em;
+            line-height: 1.4;
+        }
+        
+        .credential-actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .file-input-container {
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        .file-input-label {
+            display: inline-block;
+            padding: 8px 15px;
+            background-color: #f8f9fa;
+            border: 1px dashed #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .file-input-label:hover {
+            background-color: #e9ecef;
+        }
+        
+        #photo-input {
+            display: none;
+        }
+        
+        .flip-btn {
+            background: linear-gradient(to right, #9b59b6, #8e44ad);
+        }
+        
+        .flip-btn:hover {
+            background: linear-gradient(to right, #8e44ad, #7d3c98);
+        }
+        
+        .photo-placeholder-text {
+            color: #777;
+            text-align: center;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Registro de Alumnos</h1>
+    </div>
+    
+    <div class="container">
+        <form id="student-form">
+            <div class="file-input-container">
+                <label for="photo-input" class="file-input-label" id="photo-label">
+                    Seleccionar Foto del Alumno
+                </label>
+                <input type="file" id="photo-input" accept="image/*">
+            </div>
+            
+            <div class="form-group">
+                <label for="student-name">Nombre Completo (solo letras)</label>
+                <input type="text" id="student-name" pattern="[A-Za-zÁÉÍÓÚáéíóúñÑ ]+" required>
+                <div class="error-message" id="name-error">Solo se permiten letras y espacios</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="student-grade">Grupo</label>
+                <select id="student-grade" required>
+                    <option value="">Seleccione un grupo</option>
+                    <option value="1°">1°</option>
+                    <option value="2°">2°</option>
+                    <option value="3°">3°</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="school-year">Ciclo Escolar</label>
+                <select id="school-year" required>
+                    <option value="">Seleccione ciclo escolar</option>
+                    <!-- Generar opciones desde 2025 hasta 2050 -->
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const yearSelect = document.getElementById('school-year');
+                            const currentYear = new Date().getFullYear();
+                            const startYear = currentYear > 2025 ? currentYear : 2025;
+                            
+                            for (let year = startYear; year <= 2050; year++) {
+                                const option = document.createElement('option');
+                                option.value = `${year}-${year + 1}`;
+                                option.textContent = `${year}-${year + 1}`;
+                                yearSelect.appendChild(option);
+                            }
+                        });
+                    </script>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>ID del Alumno (generado automáticamente)</label>
+                <div class="id-display" id="student-id-display">Presione "Generar ID"</div>
+                <button type="button" id="generate-id" class="btn btn-generate">Generar ID</button>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn">Generar Credencial</button>
+            </div>
+        </form>
+        
+        <div class="credential-container" id="credential-container">
+            <div class="credential-wrapper">
+                <div class="credential" id="credential">
+                    <!-- Parte frontal de la credencial -->
+                    <div class="credential-front">
+                        <div class="top-logos">
+                            <div class="government-logo">
+                                <img src="/img/estado-de-mexico.png" alt="Gobierno del Estado">
+                            </div>
+                            <div class="school-name">ESCUELA SECUNDARIA OFICIAL No. 123</div>
+                            <div class="school-logo">
+                                <img src="/img/ESCUDO (1).jpg" alt="Logo Escuela">
+                            </div>
+                        </div>
+                        
+                        <div class="student-main-content">
+                            <div class="student-photo-container" id="student-photo-container">
+                                <div class="photo-placeholder-text">Foto del alumno</div>
+                            </div>
+                            <div class="student-info">
+                                <div class="student-name" id="display-name"></div>
+                                <div class="student-grade">Grupo: <span id="display-grade"></span></div>
+                            </div>
+                        </div>
+                        
+                        <div class="bottom-section">
+                            <div class="government-seal">
+                                <img src="/img/edomex-logo-2023.png" alt="Sello Gobierno">
+                            </div>
+                            <div class="school-years" id="display-school-year"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Parte trasera de la credencial -->
+                    <div class="credential-back">
+                        <div class="turn-header">TURNO VESPERTINO</div>
+                        
+                        <div class="qr-section">
+                            <div class="qr-label">CÓDIGO DE IDENTIFICACIÓN</div>
+                            <div class="qr-container">
+                                <div id="qrcode"></div>
+                                <div class="qr-id-display" id="qr-id-display"></div>
+                            </div>
+                            <div class="stamp-area">Sello y logo de la escuela</div>
+                        </div>
+                        
+                        <div class="school-address">
+                            Av. Juárez No. 123, Col. Centro<br>
+                            Toluca, Estado de México<br>
+                            Tel. 722 123 4567
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="credential-actions">
+                <button id="flip-credential" class="btn flip-btn">Voltear Credencial</button>
+                <button id="download-credential" class="btn">Descargar Credencial</button>
+                <button id="print-credential" class="btn">Imprimir Credencial</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const studentForm = document.getElementById('student-form');
+            const generateIdBtn = document.getElementById('generate-id');
+            const studentIdDisplay = document.getElementById('student-id-display');
+            const credentialContainer = document.getElementById('credential-container');
+            const credential = document.getElementById('credential');
+            const qrcodeDiv = document.getElementById('qrcode');
+            const qrIdDisplay = document.getElementById('qr-id-display');
+            const downloadBtn = document.getElementById('download-credential');
+            const printBtn = document.getElementById('print-credential');
+            const flipBtn = document.getElementById('flip-credential');
+            const nameInput = document.getElementById('student-name');
+            const nameError = document.getElementById('name-error');
+            const photoInput = document.getElementById('photo-input');
+            const photoLabel = document.getElementById('photo-label');
+            const studentPhotoContainer = document.getElementById('student-photo-container');
+            const displaySchoolYear = document.getElementById('display-school-year');
+            
+            let generatedId = '';
+            let qrCode = null;
+            let studentPhotoUrl = '';
+            
+            // Manejar la selección de foto
+            photoInput.addEventListener('change', function(e) {
+                if (e.target.files && e.target.files[0]) {
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(event) {
+                        studentPhotoUrl = event.target.result;
+                        studentPhotoContainer.innerHTML = `
+                            <img class="student-photo" src="${studentPhotoUrl}" alt="Foto del alumno">
+                        `;
+                        photoLabel.textContent = 'Cambiar Foto';
+                    };
+                    
+                    reader.readAsDataURL(e.target.files[0]);
+                }
+            });
+            
+            // Validar nombre (solo letras)
+            nameInput.addEventListener('input', function() {
+                const regex = /^[A-Za-zÁÉÍÓÚáéíóúñÑ ]+$/;
+                if (!regex.test(this.value)) {
+                    nameError.style.display = 'block';
+                    this.setCustomValidity('Solo se permiten letras y espacios');
+                } else {
+                    nameError.style.display = 'none';
+                    this.setCustomValidity('');
+                }
+            });
+            
+            // Generar ID aleatorio
+            generateIdBtn.addEventListener('click', function() {
+                // Generar ID de 8 caracteres alfanuméricos
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                generatedId = '';
+                
+                for (let i = 0; i < 8; i++) {
+                    generatedId += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                
+                studentIdDisplay.textContent = generatedId;
+            });
+            
+            // Voltear credencial
+            flipBtn.addEventListener('click', function() {
+                credential.classList.toggle('flipped');
+            });
+            
+            // Generar Credencial
+            studentForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                if (!generatedId) {
+                    alert('Por favor genere un ID primero');
+                    return;
+                }
+                
+                if (!studentPhotoUrl) {
+                    alert('Por favor seleccione una foto del alumno');
+                    return;
+                }
+                
+                const schoolYear = document.getElementById('school-year').value;
+                if (!schoolYear) {
+                    alert('Por favor seleccione un ciclo escolar');
+                    return;
+                }
+                
+                // Mostrar información en la credencial
+                document.getElementById('display-name').textContent = nameInput.value.toUpperCase();
+                document.getElementById('display-grade').textContent = document.getElementById('student-grade').value;
+                displaySchoolYear.textContent = schoolYear;
+                qrIdDisplay.textContent = generatedId;
+                
+                // Generar QR
+                if (qrCode) {
+                    qrCode.clear();
+                }
+                
+                qrCode = new QRCode(qrcodeDiv, {
+                    text: generatedId,
+                    width: 150,
+                    height: 150,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+                
+                credentialContainer.style.display = 'flex';
+            });
+            
+            // Descargar Credencial como imagen
+            downloadBtn.addEventListener('click', function() {
+                if (!qrCode) return;
+                
+                // Crear un contenedor temporal para ambas caras
+                const tempContainer = document.createElement('div');
+                tempContainer.style.position = 'absolute';
+                tempContainer.style.left = '-9999px';
+                tempContainer.style.display = 'flex';
+                tempContainer.style.gap = '20px';
+                document.body.appendChild(tempContainer);
+                
+                // Clonar ambas caras
+                const frontClone = document.querySelector('.credential-front').cloneNode(true);
+                const backClone = document.querySelector('.credential-back').cloneNode(true);
+                
+                // Ajustar estilos para la exportación
+                frontClone.style.transform = 'none';
+                frontClone.style.position = 'relative';
+                frontClone.style.backfaceVisibility = 'visible';
+                frontClone.style.width = '350px';
+                frontClone.style.height = '500px';
+                
+                backClone.style.transform = 'none';
+                backClone.style.position = 'relative';
+                backClone.style.backfaceVisibility = 'visible';
+                backClone.style.width = '350px';
+                backClone.style.height = '500px';
+                
+                tempContainer.appendChild(frontClone);
+                tempContainer.appendChild(backClone);
+                
+                // Usar html2canvas para convertir a imagen
+                if (typeof html2canvas !== 'undefined') {
+                    html2canvas(tempContainer, {
+                        scale: 2,
+                        logging: false,
+                        useCORS: true,
+                        allowTaint: true
+                    }).then(canvas => {
+                        const link = document.createElement('a');
+                        link.download = `Credencial_${generatedId}.png`;
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                        document.body.removeChild(tempContainer);
+                    });
+                } else {
+                    alert('La función de descarga requiere la librería html2canvas');
+                    document.body.removeChild(tempContainer);
+                }
+            });
+            
+            // Imprimir Credencial
+            printBtn.addEventListener('click', function() {
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Credencial de Alumno - ${nameInput.value}</title>
+                        <style>
+                            @page { size: auto; margin: 5mm; }
+                            body { 
+                                font-family: Arial, sans-serif;
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                height: 100vh;
+                                margin: 0;
+                                background-color: #f5f5f5;
+                            }
+                            .print-container {
+                                display: flex;
+                                gap: 20px;
+                                padding: 20px;
+                            }
+                            .credential {
+                                width: 350px;
+                                height: 500px;
+                                position: relative;
+                                border-radius: 15px;
+                                box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+                            }
+                            .credential-front {
+                                background: linear-gradient(135deg, #e8f0fe 0%, #d2e3fc 100%);
+                                display: flex;
+                                flex-direction: column;
+                                align-items: center;
+                                justify-content: space-between;
+                                height: 100%;
+                            }
+                            .credential-back {
+                                background: linear-gradient(135deg, #e8f0fe 0%, #d2e3fc 100%);
+                                display: flex;
+                                flex-direction: column;
+                                align-items: center;
+                                justify-content: space-between;
+                                height: 100%;
+                            }
+                            .top-logos {
+                                width: 100%;
+                                display: flex;
+                                justify-content: space-between;
+                                align-items: center;
+                                padding: 15px;
+                                background: linear-gradient(to right, #1155a3, #1a73e8);
+                            }
+                            .government-logo, .school-logo {
+                                height: 60px;
+                                display: flex;
+                                align-items: center;
+                            }
+                            .government-logo img, .school-logo img {
+                                height: 100%;
+                                width: auto;
+                                object-fit: contain;
+                            }
+                            .school-name {
+                                color: white;
+                                font-size: 1.1em;
+                                font-weight: bold;
+                                text-align: center;
+                                flex-grow: 1;
+                                padding: 0 10px;
+                            }
+                            .student-main-content {
+                                display: flex;
+                                flex-direction: column;
+                                align-items: center;
+                                padding: 20px;
+                                width: 100%;
+                            }
+                            .student-photo-container {
+                                width: 120px;
+                                height: 150px;
+                                background-color: #fff;
+                                border: 2px solid #1155a3;
+                                margin-bottom: 15px;
+                                overflow: hidden;
+                            }
+                            .student-photo {
+                                width: 100%;
+                                height: 100%;
+                                object-fit: cover;
+                            }
+                            .student-info {
+                                text-align: center;
+                                width: 100%;
+                                margin-bottom: 20px;
+                            }
+                            .student-name {
+                                font-size: 1.3em;
+                                font-weight: bold;
+                                color: #1155a3;
+                                margin-bottom: 5px;
+                            }
+                            .student-grade {
+                                font-size: 1.1em;
+                                color: #333;
+                            }
+                            .bottom-section {
+                                width: 100%;
+                                display: flex;
+                                justify-content: space-between;
+                                align-items: center;
+                                padding: 10px 15px;
+                                background: linear-gradient(to right, #1155a3, #1a73e8);
+                            }
+                            .government-seal {
+                                height: 50px;
+                            }
+                            .government-seal img {
+                                height: 100%;
+                                width: auto;
+                            }
+                            .school-years {
+                                color: white;
+                                font-weight: bold;
+                                text-align: center;
+                                font-size: 1.1em;
+                            }
+                            .turn-header {
+                                width: 100%;
+                                padding: 15px;
+                                text-align: center;
+                                background: linear-gradient(to right, #1155a3, #1a73e8);
+                                color: white;
+                                font-size: 1.3em;
+                                font-weight: bold;
+                            }
+                            .qr-section {
+                                margin: 30px 0;
+                                padding: 20px;
+                                background-color: white;
+                                border-radius: 8px;
+                                text-align: center;
+                                width: 80%;
+                                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                            }
+                            .qr-container {
+                                margin: 0 auto;
+                                display: flex;
+                                flex-direction: column;
+                                align-items: center;
+                            }
+                            .qr-label {
+                                font-size: 0.9em;
+                                color: #7f8c8d;
+                                margin-bottom: 10px;
+                                font-weight: bold;
+                            }
+                            .qr-id-display {
+                                font-family: monospace;
+                                font-size: 1.2em;
+                                margin-top: 15px;
+                                font-weight: bold;
+                                color: #2c3e50;
+                            }
+                            .stamp-area {
+                                width: 80%;
+                                height: 60px;
+                                margin-top: 10px;
+                                background-color: white;
+                                border: 1px dashed #999;
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                color: #777;
+                                font-size: 0.9em;
+                            }
+                            .school-address {
+                                width: 100%;
+                                padding: 15px;
+                                text-align: center;
+                                background: linear-gradient(to right, #1155a3, #1a73e8);
+                                color: white;
+                                font-size: 0.8em;
+                                line-height: 1.4;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="print-container">
+                            ${document.querySelector('.credential-front').outerHTML}
+                            ${document.querySelector('.credential-back').outerHTML}
+                        </div>
+                        <script>
+                            window.onload = function() {
+                                setTimeout(function() {
+                                    window.print();
+                                    window.close();
+                                }, 500);
+                            };
+                        <\/script>
+                    </body>
+                    </html>
+                `);
+                printWindow.document.close();
+            });
+        });
+    </script>
+    
+    <!-- Librería para convertir HTML a imagen -->
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+</body>
+</html>

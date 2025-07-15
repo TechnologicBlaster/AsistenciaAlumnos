@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Asistencias</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .main-container {
+            text-align: center;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+        }
+        
+        .logo-container {
+            margin-bottom: 30px;
+        }
+        
+        .logo {
+            max-width: 200px;
+            height: auto;
+        }
+        
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .option-btn {
+            display: block;
+            padding: 15px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 18px;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .option-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .entrada-btn {
+            background-color: #27ae60;
+        }
+        
+        .salida-btn {
+            background-color: #e74c3c;
+        }
+        
+        .registro-btn {
+            background-color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="logo-container">
+            <img src="img/ESCUDO (1).jpg" alt="Logo Empresa" class="logo">
+        </div>
+        <div class="options-container">
+            <a href="pages/entrada.html" class="option-btn entrada-btn">Registro de Entrada</a>
+            <a href="pages/salida.html" class="option-btn salida-btn">Registro de Salida</a>
+            <a href="pages/registro-alumnos.html" class="option-btn registro-btn">Registro de Alumnos</a>
+        </div>
+    </div>
+</body>
+</html>
